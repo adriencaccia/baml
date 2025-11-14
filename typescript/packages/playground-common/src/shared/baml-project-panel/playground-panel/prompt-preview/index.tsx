@@ -1,19 +1,17 @@
 'use client';
 import { CopyButton } from '@baml/ui/custom/copy-button';
 import { SidebarInset, SidebarProvider } from '@baml/ui/sidebar';
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@baml/ui/resizable';
 import { useAtomValue } from 'jotai';
 import { ApiKeysDialog } from '../../../../components/api-keys-dialog/dialog';
 import { StatusBar } from '../../../../components/status-bar';
+import { wasmAtom } from '../../atoms';
 import { vscode } from '../../vscode';
-import { functionTestSnippetAtom, selectionAtom, detailPanelStateAtom, viewModeAtom } from '../atoms';
+import { functionTestSnippetAtom, selectionAtom } from '../atoms';
 import { PreviewToolbar } from '../preview-toolbar';
 import { TestingSidebar } from '../side-bar';
-import { UnifiedPromptPreview } from './unified-prompt-preview';
-import { AdaptiveBottomPanel } from './adaptive-bottom-panel';
-import { SelectionBridge } from '../SelectionBridge';
-// disable the react-flow handle CSS
-import '../../../../workflow-styles.css';
+import { Loader } from './components';
+import { PromptRenderWrapper } from './prompt-render-wrapper';
+import { TestPanel } from './test-panel';
 
 export const NoTestsContent = () => {
   const { selectedFn } = useAtomValue(selectionAtom);
@@ -23,7 +21,7 @@ export const NoTestsContent = () => {
 
   // Check if the function has any valid test cases
   const hasValidTestCases =
-    selectedFn?.testCases && selectedFn.testCases.length > 0;
+    selectedFn?.test_cases && selectedFn.test_cases.length > 0;
 
   const message = hasValidTestCases
     ? 'Add a test to see the preview!'
@@ -71,59 +69,40 @@ export const NoTestsContent = () => {
 };
 
 export const PromptPreview = () => {
+  const wasm = useAtomValue(wasmAtom);
   const { selectedTc } = useAtomValue(selectionAtom);
-  const detailPanelState = useAtomValue(detailPanelStateAtom);
-  const viewMode = useAtomValue(viewModeAtom);
-
-  console.log('viewMode', viewMode);
-  console.log('selectedTc', selectedTc);
-  const shouldRenderGraphLayout = viewMode.showGraphTab || !!selectedTc;
-  console.log('shouldRenderGraphLayout', shouldRenderGraphLayout);
 
   return (
     <>
-      <SelectionBridge />
       <SidebarProvider defaultOpen={vscode.isVscode()} className="h-full min-h-0">
         <SidebarInset>
-          <div className="h-full flex flex-col overflow-hidden relative">
-            {/* Header - always at top */}
-            <div className="flex-shrink-0 px-4 py-2 min-w-0 overflow-hidden">
-              <PreviewToolbar />
-            </div>
+          {wasm ? (
+            <div className="h-full flex flex-col overflow-hidden relative">
+              {/* Header - always at top */}
+              <div className="flex-shrink-0 px-4 py-2 min-w-0 overflow-hidden">
+                <PreviewToolbar />
+              </div>
 
-            {/* Resizable Layout - Main Content + Bottom Panel */}
-            <div className="flex-1 min-h-0">
-              {shouldRenderGraphLayout ? (
-                <ResizablePanelGroup direction="vertical" id="unified-layout">
-                  {/* Main Panel - Unified Prompt Preview with tabs */}
-                  <ResizablePanel defaultSize={detailPanelState.isOpen ? 60 : 100} minSize={30}>
-                    <div className="h-full overflow-y-auto px-1">
-                      <UnifiedPromptPreview />
-                    </div>
-                  </ResizablePanel>
-
-                  {/* Bottom Panel - Adaptive (TestPanel or DetailPanel) */}
-                  {detailPanelState.isOpen && (
-                    <>
-                      <ResizableHandle />
-                      <ResizablePanel defaultSize={40} minSize={20} maxSize={70}>
-                        <AdaptiveBottomPanel />
-                      </ResizablePanel>
-                    </>
-                  )}
-                </ResizablePanelGroup>
-              ) : (
-                <div className="overflow-y-scroll h-full px-1">
+              {/* Scrollable Body - takes remaining space */}
+              <div className="flex-1 overflow-y-scroll min-h-0 pb-14 px-1 min-w-0">
+                {selectedTc ? (
+                  <>
+                    <PromptRenderWrapper />
+                    <TestPanel />
+                  </>
+                ) : (
                   <NoTestsContent />
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
-            {/* Footer - always at bottom */}
-            <div className="flex-shrink-0 absolute bottom-0 left-0 right-0 flex">
-              <StatusBar />
+              {/* Footer - always at bottom */}
+              <div className="flex-shrink-0 absolute bottom-0 left-0 right-0 flex">
+                <StatusBar />
+              </div>
             </div>
-          </div>
+          ) : (
+            <Loader message="Loading..." />
+          )}
         </SidebarInset>
         <TestingSidebar />
       </SidebarProvider>

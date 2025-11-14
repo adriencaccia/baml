@@ -100,7 +100,7 @@ export const RenderPromptPart: React.FC<{
 
   return (
     <div className="flex flex-col min-w-0">
-      <div className="px-3 pb-3 pt-0 bg-accent group max-h-[600px] overflow-y-auto overflow-x-hidden min-w-0">
+      <div className="px-3 pb-3 pt-2 bg-accent group max-h-[600px] overflow-y-auto overflow-x-hidden min-w-0">
         <pre
           className={cn(
             'whitespace-pre-wrap text-xs leading-relaxed transition-all text-primary-foreground min-w-0',

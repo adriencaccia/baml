@@ -33,7 +33,6 @@ import { isParallelTestsEnabledAtom } from './prompt-preview/test-panel/atoms';
 import { useRunBamlTests } from './prompt-preview/test-panel/test-runner';
 import { standaloneBetaFeatureEnabledAtom, isVSCodeEnvironment } from '../feature-flags';
 import { vscodeSettingsAtom } from '../atoms';
-import { useTheme } from 'next-themes';
 
 export const displaySettingsAtom = atom({
   showTokens: false,
@@ -104,8 +103,6 @@ export function PreviewToolbar() {
   );
   const proxySettings = useAtomValue(proxyUrlAtom);
   const setBamlConfig = useSetAtom(bamlConfig);
-  const { resolvedTheme, setTheme } = useTheme();
-  const isLightMode = resolvedTheme === 'light';
   
   // Beta feature flag settings
   const [betaFeatureEnabled, setBetaFeatureEnabled] = useAtom(standaloneBetaFeatureEnabledAtom);
@@ -191,17 +188,18 @@ export function PreviewToolbar() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="min-w-fit p-0">
-              <DropdownMenuLabel className="text-xs px-2 py-1.5">
-                Appearance
-              </DropdownMenuLabel>
-              <DropdownMenuCheckboxItem
-                checked={isLightMode}
-                onCheckedChange={(checked) => setTheme(checked ? 'light' : 'dark')}
-                className="text-sm px-2 py-1.5 pl-7"
-              >
-                Light Mode
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuSeparator />
+              {/* <DropdownMenuLabel>Display</DropdownMenuLabel> */}
+              {/* {options.map((option) => (
+                <DropdownMenuCheckboxItem
+                  key={option.label}
+                  checked={displaySettings. === option.value}
+                  onCheckedChange={() => setDisplaySettings(option.value)}
+                >
+                  <option.icon className='mr-2 size-4' />
+                  {option.label}
+                </DropdownMenuCheckboxItem>
+              ))} */}
+              {/* <DropdownMenuSeparator /> */}
               <DropdownMenuLabel className="text-xs px-2 py-1.5">
                 Testing
               </DropdownMenuLabel>

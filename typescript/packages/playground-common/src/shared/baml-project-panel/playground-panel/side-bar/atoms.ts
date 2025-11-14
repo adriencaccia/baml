@@ -1,7 +1,7 @@
 import { atom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
 import { vscode } from '../../vscode';
-import { runtimeStateAtom } from '../../../atoms';
+import { runtimeStateAtom } from '../atoms';
 import { sessionStore } from '../../../../baml_wasm_web/JotaiProvider';
 
 const getIsEmbed = () => {
@@ -11,9 +11,12 @@ const getIsEmbed = () => {
 
 export const functionsAtom = atom((get) => {
   const runtimeState = get(runtimeStateAtom);
+  if (runtimeState === undefined) {
+    return [];
+  }
   return runtimeState.functions.map((f) => ({
     name: f.name,
-    tests: f.testCases?.map((t) => t.name) || [],
+    tests: f.test_cases.map((t) => t.name),
   }));
 });
 

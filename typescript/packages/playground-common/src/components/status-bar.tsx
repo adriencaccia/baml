@@ -9,8 +9,11 @@ import {
 import { useAtomValue } from 'jotai';
 import { AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { bamlCliVersionAtom } from '../baml_wasm_web/EventListener';
-import { useBAMLSDK } from '../sdk';
+import {
+  bamlCliVersionAtom,
+  numErrorsAtom,
+  versionAtom,
+} from '../baml_wasm_web/EventListener';
 import { ErrorWarningDialog } from './ErrorWarningDialog';
 
 const BreakpointBadge: React.FC = () => {
@@ -98,8 +101,7 @@ const BreakpointBadge: React.FC = () => {
 };
 
 const ErrorCount: React.FC<{ onClick?: () => void }> = ({ onClick }) => {
-  const sdk = useBAMLSDK();
-  const { errors, warnings } = useAtomValue(sdk.atoms.numErrorsAtom);
+  const { errors, warnings } = useAtomValue(numErrorsAtom);
   if (errors === 0 && warnings === 0) {
     return (
       <div className="flex flex-row gap-1 items-center text-green-600">
@@ -133,9 +135,8 @@ const ErrorCount: React.FC<{ onClick?: () => void }> = ({ onClick }) => {
 };
 
 export const StatusBar: React.FC = () => {
-  const sdk = useBAMLSDK();
   const bamlCliVersion = useAtomValue(bamlCliVersionAtom);
-  const version = useAtomValue(sdk.atoms.versionAtom);
+  const version = useAtomValue(versionAtom);
   const [showDialog, setShowDialog] = useState(false);
 
   return (

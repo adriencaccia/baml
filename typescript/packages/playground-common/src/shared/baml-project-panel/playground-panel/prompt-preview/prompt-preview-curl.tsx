@@ -13,7 +13,6 @@ import { TruncatedString } from './TruncatedString';
 import { Loader } from './components';
 import { vscode } from '../../vscode';
 import { EnhancedErrorRenderer } from './test-panel/components/EnhancedErrorRenderer';
-import { runtimeInstanceAtom } from '../../../../sdk/atoms/core.atoms';
 
 type CurlResult =
   | {
@@ -24,15 +23,13 @@ type CurlResult =
   | Error;
 
 const baseCurlAtom = atom<Promise<CurlResult>>(async (get) => {
-  const runtime = get(runtimeInstanceAtom);
+  const rt = get(runtimeAtom).rt;
   const ctx = get(ctxAtom);
   const envVars = get(apiKeysAtom);
   const files = get(filesAtom); // Add files dependency to track content changes
   const { selectedFn, selectedTc } = get(selectionAtom);
 
-
-  if (!selectedFn || !runtime || !selectedTc) {
-    console.log('[curl] no selectedFn or runtime or selectedTc');
+  if (!selectedFn || !rt || !selectedTc || !ctx) {
     return undefined;
   }
 
@@ -48,37 +45,28 @@ const baseCurlAtom = atom<Promise<CurlResult>>(async (get) => {
   let curlTextWithSecrets = '';
 
   try {
-    // Use runtime interface method instead of calling WASM directly
-    curlTextWithoutSecrets = await runtime.renderCurlForTest(
-      selectedFn.name,
+    curlTextWithoutSecrets = await selectedFn.render_raw_curl_for_test(
+      rt,
       selectedTc.name,
-      {
-        stream: false,
-        expandImages: false,
-        exposeSecrets: false,
-      },
-      {
-        apiKeys: envVars,
-        loadMediaFile: vscode.loadMediaFile,
-      }
+      ctx,
+      false,
+      false,
+      vscode.loadMediaFile,
+      envVars,
+      false, // Pass flag to indicate whether to expose secrets
     );
 
-
-    curlTextWithSecrets = await runtime.renderCurlForTest(
-      selectedFn.name,
+    curlTextWithSecrets = await selectedFn.render_raw_curl_for_test(
+      rt,
       selectedTc.name,
-      {
-        stream: false,
-        expandImages: false,
-        exposeSecrets: true,
-      },
-      {
-        apiKeys: envVars,
-        loadMediaFile: vscode.loadMediaFile,
-      }
+      ctx,
+      false,
+      false,
+      vscode.loadMediaFile,
+      envVars,
+      true, // Pass flag to indicate whether to expose secrets
     );
   } catch (error) {
-    console.error('[curl] error', error);
     return error as Error;
   }
 
@@ -151,7 +139,7 @@ const SyntaxHighlightedCurl = memo(({ text }: { text: string }) => {
 
   return (
     <div
-      className="w-full rounded-lg border bg-accent p-4 font-mono overflow-auto text-xs"
+      className="w-full rounded-lg border bg-accent p-4 font-mono overflow-auto"
       style={
         {
           // Use VSCode-themed CSS variables from globals.css
@@ -241,7 +229,6 @@ export const PromptPreviewCurl = () => {
     | { curlTextWithoutSecrets: string; curlTextWithSecrets: string }
     | undefined
   >(undefined);
-
 
   useEffect(() => {
     if (curl.state === 'hasData' && curl.data && !(curl.data instanceof Error)) {

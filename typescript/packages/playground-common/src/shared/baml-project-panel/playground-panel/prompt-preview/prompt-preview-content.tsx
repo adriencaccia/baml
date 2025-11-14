@@ -1,3 +1,4 @@
+import type { WasmError, WasmPrompt } from '@gloo-ai/baml-schema-wasm-web';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
 import { useState } from 'react';
 import { useMemo } from 'react';
@@ -9,13 +10,11 @@ import { Loader } from './components';
 import { vscode } from '../../vscode';
 import { RenderPrompt } from './render-prompt';
 import { EnhancedErrorRenderer } from './test-panel/components/EnhancedErrorRenderer';
-import { runtimeInstanceAtom } from '../../../../sdk/atoms/core.atoms';
-import type { PromptInfo } from '../../../../sdk/interface';
 
-export const renderedPromptAtom = atom<PromptInfo | undefined>(undefined);
+export const renderedPromptAtom = atom<WasmPrompt | undefined>(undefined);
 
 export const PromptPreviewContent = () => {
-  const runtime = useAtomValue(runtimeInstanceAtom);
+  const { rt } = useAtomValue(runtimeAtom);
   const apiKeys = useAtomValue(apiKeysAtom);
   const ctx = useAtomValue(ctxAtom);
   const files = useAtomValue(filesAtom);
@@ -28,34 +27,35 @@ export const PromptPreviewContent = () => {
   const generatePreview = useMemo(
     () => async () => {
       if (
-        runtime === null ||
+        rt === undefined ||
+        ctx === undefined ||
         selectedFn === undefined ||
         selectedTc === undefined
       ) {
-        console.log('[PromptPreview] no runtime or selectedFn or selectedTc');
         return;
       }
-      console.log('[PromptPreview] Attempt renderPromptForTest', {
+      console.log('[PromptPreview] Attempt render_prompt_for_test', {
         functionName: selectedFn.name,
         testCaseName: selectedTc.name,
-        hasTests: selectedFn.testCases?.length ?? 0,
+        hasExprTests: selectedFn.test_cases?.length ?? 0,
       });
       try {
-        // Use runtime interface method instead of calling WASM directly
-        const newPreview = await runtime.renderPromptForTest(
-          selectedFn.name,
+        const newPreview = await selectedFn.render_prompt_for_test(
+          rt,
           selectedTc.name,
-          {
-            apiKeys,
-            loadMediaFile: vscode.loadMediaFile,
-          }
+          ctx,
+          vscode.loadMediaFile,
+          apiKeys,
         );
-
+        console.log('[PromptPreview] render_prompt_for_test success', {
+          functionName: selectedFn.name,
+          testCaseName: selectedTc.name,
+        });
         setLastKnownPreview(newPreview);
         setPromptData(newPreview);
         return newPreview;
       } catch (error) {
-        console.error('[PromptPreview] renderPromptForTest failed', {
+        console.error('[PromptPreview] render_prompt_for_test failed', {
           functionName: selectedFn.name,
           testCaseName: selectedTc.name,
           error,
@@ -63,13 +63,12 @@ export const PromptPreviewContent = () => {
         throw error;
       }
     },
-    [runtime, ctx, selectedFn, selectedTc, apiKeys, files, setPromptData],
+    [rt, ctx, selectedFn, selectedTc, apiKeys, files, setPromptData],
   );
 
   const [lastKnownPreview, setLastKnownPreview] = useState<
-    PromptInfo | undefined
+    WasmPrompt | undefined
   >();
-
 
   const {
     data: preview,
@@ -77,7 +76,7 @@ export const PromptPreviewContent = () => {
     isLoading,
   } = useSWR(
     // Include file content in the key so updates trigger when typing
-    runtime && selectedFn && selectedTc
+    rt && ctx && selectedFn && selectedTc
       ? [
         'prompt-preview',
         selectedFn.name,
@@ -97,14 +96,12 @@ export const PromptPreviewContent = () => {
 
   if (isLoading && !preview) {
     if (lastKnownPreview) {
-      console.log('[PromptPreview] Rendering last known preview');
       return <RenderPrompt prompt={lastKnownPreview} testCase={selectedTc} />;
     }
     return <Loader message="Loading..." />;
   }
 
   if (error) {
-
     return (
       <EnhancedErrorRenderer
         errorMessage={error instanceof Error ? error.message : 'Unknown Error'}
@@ -114,11 +111,11 @@ export const PromptPreviewContent = () => {
 
   if (diagnostics.length > 0 && diagnostics.some((d) => d.type === 'error')) {
     const errorMessages = diagnostics
-      .filter((d) => d.type === 'error')
+      .filter((d: WasmError) => d.type === 'error')
       .map((d) => `- ${d.message}`)
       .join('\n');
 
-    const fullErrorMessage = `${diagnostics.filter((d) => d.type === 'error').length} error(s):\n${errorMessages}`;
+    const fullErrorMessage = `${diagnostics.filter((d: WasmError) => d.type === 'error').length} error(s):\n${errorMessages}`;
 
     return (
       <div className="relative">

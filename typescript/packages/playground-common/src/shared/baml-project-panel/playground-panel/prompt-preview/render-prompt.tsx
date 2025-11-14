@@ -1,11 +1,11 @@
-import type { PromptInfo, TestCaseMetadata } from '../../../../sdk/interface';
+import type { WasmPrompt, WasmTestCase } from '@gloo-ai/baml-schema-wasm-web';
 import { CollapsibleMessage } from './collapsible-message';
 
 export const RenderPrompt: React.FC<{
-  prompt?: PromptInfo;
-  testCase?: TestCaseMetadata;
+  prompt?: WasmPrompt;
+  testCase?: WasmTestCase;
 }> = ({ prompt, testCase }) => {
-  const chat = prompt?.type === 'chat' ? (prompt.messages ?? []) : [];
+  const chat = prompt?.as_chat() ?? [];
 
   return (
     <div className="flex flex-col gap-y-4">

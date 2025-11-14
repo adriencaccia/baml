@@ -90,8 +90,8 @@ function NotificationItem({ notification, index }: { notification: WatchNotifica
         </div>
 
         {/* Channel name if present */}
-        {notification.channelName && (
-          <span className="text-muted-foreground text-xs">ch: {notification.channelName}</span>
+        {notification.channel_name && (
+          <span className="text-muted-foreground text-xs">ch: {notification.channel_name}</span>
         )}
       </div>
 
@@ -113,9 +113,9 @@ function NotificationItem({ notification, index }: { notification: WatchNotifica
               })()}
             </pre>
           </div>
-          {notification.blockName && (
+          {notification.block_name && (
             <div className="mt-1">
-              <span className="text-muted-foreground text-xs">Function: {notification.blockName}</span>
+              <span className="text-muted-foreground text-xs">Function: {notification.block_name}</span>
             </div>
           )}
         </div>

@@ -85,16 +85,6 @@ export function TestItem({
     setSelectedItem(functionName, label);
   };
 
-  const handleJumpToFile = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    // Update selection first
-    setSelectedItem(functionName, label);
-    // Then jump to file
-    if (tc?.span) {
-      vscode.jumpToFile(tc.span);
-    }
-  };
-
   const handleRunTest = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (isThisTestRunning) {
@@ -117,7 +107,12 @@ export function TestItem({
             <TooltipTrigger asChild>
               <span
                 className="ml-1 text-sm truncate cursor-pointer hover:text-primary hover:underline"
-                onClick={handleJumpToFile}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (tc?.span) {
+                    vscode.jumpToFile(tc.span);
+                  }
+                }}
               >
                 {highlightText(label, searchTerm)}
               </span>

@@ -111,11 +111,11 @@ export function TestingSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <div className="flex items-center gap-2 relative">
-              <div className="text-sidebar-primary-foreground flex aspect-square size-6 items-center justify-center rounded-lg">
+              <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                 <FlaskConical className="size-4" />
               </div>
               <div className="flex flex-col gap-0.5 leading-none">
-                <span className="font-medium text-sm">BAML Tests</span>
+                <span className="font-medium">BAML Tests</span>
               </div>
             </div>
             <div className='absolute right-0 top-0 xl:hidden'>

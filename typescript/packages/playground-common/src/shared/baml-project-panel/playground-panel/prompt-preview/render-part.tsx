@@ -1,19 +1,19 @@
 import type {
-  ChatMessagePart,
-  TestCaseMetadata,
-} from '../../../../sdk/interface';
+  WasmChatMessagePart,
+  WasmTestCase,
+} from '@gloo-ai/baml-schema-wasm-web';
 import { extractStringValues, getHighlightChunks } from './highlight-utils';
 import { RenderPromptPart } from './render-text';
 import { WebviewMedia } from './webview-media';
 
 export const RenderPart: React.FC<{
-  part: ChatMessagePart;
-  testCase?: TestCaseMetadata;
+  part: WasmChatMessagePart;
+  testCase?: WasmTestCase;
   maxTextLength?: number;
 }> = ({ part, testCase, maxTextLength = 20000 }) => {
-  if (part.type === 'text') {
+  if (part.is_text()) {
     // Get the raw text without HTML encoding - React will handle escaping automatically
-    const text = part.content;
+    const text = part.as_text() ?? '';
     // Skip processing if any input value is too large
     const hasLargeInput = (testCase?.inputs ?? []).some(
       (input) =>
@@ -31,21 +31,25 @@ export const RenderPart: React.FC<{
     ) : null;
   }
 
-  // For media parts, the content is the media data
-  if (part.type === 'image') {
-    return <WebviewMedia bamlMediaType="image" media={{ content: part.content }} />;
+  const media = part.as_media();
+  if (!media) {
+    return null;
   }
 
-  if (part.type === 'audio') {
-    return <WebviewMedia bamlMediaType="audio" media={{ content: part.content }} />;
+  if (part.is_image()) {
+    return <WebviewMedia bamlMediaType="image" media={media} />;
   }
 
-  if (part.type === 'pdf') {
-    return <WebviewMedia bamlMediaType="pdf" media={{ content: part.content }} />;
+  if (part.is_audio()) {
+    return <WebviewMedia bamlMediaType="audio" media={media} />;
   }
 
-  if (part.type === 'video') {
-    return <WebviewMedia bamlMediaType="video" media={{ content: part.content }} />;
+  if (part.is_pdf()) {
+    return <WebviewMedia bamlMediaType="pdf" media={media} />;
+  }
+
+  if (part.is_video()) {
+    return <WebviewMedia bamlMediaType="video" media={media} />;
   }
 
   return null;

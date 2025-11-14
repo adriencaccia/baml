@@ -1,10 +1,10 @@
 import { SidebarMenuButton } from '@baml/ui/sidebar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@baml/ui/tooltip';
-import { useAtomValue, useSetAtom } from 'jotai';
+import { useAtomValue } from 'jotai';
 import { FunctionSquare } from 'lucide-react';
 import * as React from 'react';
 import { vscode } from '../../vscode';
-import { functionObjectAtom, selectedItemAtom } from '../atoms';
+import { functionObjectAtom } from '../atoms';
 import { Loader } from '../prompt-preview/components';
 import {
   selectedHistoryIndexAtom,
@@ -23,7 +23,6 @@ export function FunctionItem({ functionName, tests }: FunctionItemProps) {
     [functionName],
   );
   const fn = useAtomValue(fnAtom);
-  const setSelectedItem = useSetAtom(selectedItemAtom);
 
   const testHistory = useAtomValue(testHistoryAtom);
   const selectedIndex = useAtomValue(selectedHistoryIndexAtom);
@@ -143,10 +142,6 @@ export function FunctionItem({ functionName, tests }: FunctionItemProps) {
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // Update selection - select function and first test (or undefined if no tests)
-    const firstTest = tests.length > 0 ? tests[0] : undefined;
-    setSelectedItem(functionName, firstTest);
-    // Then jump to file
     if (fn?.span) {
       vscode.jumpToFile(fn.span);
     }

@@ -22,10 +22,10 @@ import { useMemo, useState } from 'react';
 import { vscode } from '../vscode';
 import {
   functionObjectAtom,
+  runtimeStateAtom,
   selectedItemAtom,
   testcaseObjectAtom,
 } from './atoms';
-import { runtimeStateAtom } from '../../atoms';
 
 interface FunctionTestNameProps {
   functionName: string;
@@ -40,7 +40,7 @@ const functionsAtom = atom((get) => {
   }
   return runtimeState.functions.map((f) => ({
     name: f.name,
-    tests: f.testCases.map((t) => t.name),
+    tests: f.test_cases.map((t) => t.name),
   }));
 });
 

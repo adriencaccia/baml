@@ -2,7 +2,8 @@ import { atom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
 import { vscodeLocalStorageStore } from '../../shared/baml-project-panel/Jotai';
 import { vscode } from '../../shared/baml-project-panel/vscode';
-import { proxyUrlAtom, runtimeAtom } from '../../shared/baml-project-panel/atoms';
+import { proxyUrlAtom } from '../../shared/baml-project-panel/atoms';
+import { runtimeAtom } from '../../shared/baml-project-panel/atoms';
 
 export const apiKeyVisibilityAtom = atom<Record<string, boolean>>({});
 
@@ -31,7 +32,7 @@ export const showApiKeyDialogAtom = atom(
 
     // Check if ALL required vars are missing
     const hasMissingVars =
-      requiredVars.length > 0 && requiredVars.every((key: string) => !envVars[key])
+      requiredVars.length > 0 && requiredVars.every((key) => !envVars[key])
 
     const hasShownDialog = get(hasShownApiKeyDialogAtom)
     if (hasShownDialog) return apiKeyDialogOpen
@@ -195,17 +196,14 @@ export const apiKeysAtom = atom(
 );
 
 export const requiredApiKeysAtom = atom((get) => {
-  const { rt, lastValidRt } = get(runtimeAtom);
-  const runtime = rt || lastValidRt;
-
-  if (!runtime) {
+  const { rt } = get(runtimeAtom);
+  if (rt === undefined) {
     return [];
   }
-
-  const requiredEnvVars = runtime.required_env_vars();
+  const requiredEnvVars = rt.required_env_vars();
   const defaultEnvVars = ['OPENAI_API_KEY', 'ANTHROPIC_API_KEY'];
   for (const e of defaultEnvVars) {
-    if (!requiredEnvVars.find((envVar: string) => e === envVar)) {
+    if (!requiredEnvVars.find((envVar) => e === envVar)) {
       requiredEnvVars.push(e);
     }
   }
@@ -282,7 +280,7 @@ export const areApiKeysMissingAtom = atom((get) => {
   const isVscode = vscode.isVscode()
   if (!isVscode) return false
   const envVars = get(apiKeysAtom)
-  return requiredVars.length > 0 && requiredVars.some((key: string) => !envVars[key])
+  return requiredVars.length > 0 && requiredVars.some((key) => !envVars[key])
 })
 
 // Local state atoms for API key management
@@ -320,11 +318,11 @@ export const renderedApiKeysAtom = atom((get) => {
   );
 
   const missingVars = requiredApiKeys.filter(
-    (apiKey: string) => !(apiKey in localApiKeys),
+    (apiKey) => !(apiKey in localApiKeys),
   );
 
   vars.push(
-    ...missingVars.map((apiKey: string) => ({
+    ...missingVars.map((apiKey) => ({
       key: apiKey,
       value: undefined,
       required: true,
