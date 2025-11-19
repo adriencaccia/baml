@@ -6,6 +6,7 @@ export interface EventRecord {
   variable?: string | null;
   channel?: string | null;
   stream_id?: string | null;
+  lexical_id?: string | null;
   header?: {
     level: number;
     title: string;
@@ -16,6 +17,7 @@ export interface EventRecord {
 }
 
 export interface StateUpdate {
+  node_id: number;
   lexical_id: string;
   new_state: LexicalState;
 }
@@ -24,7 +26,9 @@ export type VizExecDelta = "enter" | "exit";
 
 export interface VizExecEvent {
   event: VizExecDelta;
+  node_id: number;
   node_type: string;
+  lexical_id: string;
   path_segment: {
     kind: string;
     slug?: string;

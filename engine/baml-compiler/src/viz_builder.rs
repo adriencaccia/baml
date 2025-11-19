@@ -125,14 +125,23 @@ struct Builder {
     function_name: String,
     frames: Vec<Frame>,
     nodes: VizNodes,
+    next_node_id: u32,
 }
 
 impl Builder {
     fn new(function_name: &str) -> Self {
-        let mut nodes = VizNodes::new();
+        let mut builder = Self {
+            function_name: function_name.to_string(),
+            frames: Vec::new(),
+            nodes: VizNodes::new(),
+            next_node_id: 0,
+        };
+
         let segment = PathSegment::FunctionRoot { ordinal: 0 };
         let lexical_id = encode_segments(function_name, &[segment.clone()]);
-        nodes.push(VizNode {
+        let node_id = builder.allocate_node_id();
+        builder.nodes.push(VizNode {
+            node_id,
             id: lexical_id.clone(),
             parent: None,
             node_type: RuntimeNodeType::FunctionRoot,
@@ -140,15 +149,12 @@ impl Builder {
             header_level: None,
         });
 
-        Self {
-            function_name: function_name.to_string(),
-            frames: vec![Frame::new(
-                FrameEntry::FunctionRoot,
-                Some(segment),
-                lexical_id,
-            )],
-            nodes,
-        }
+        builder.frames.push(Frame::new(
+            FrameEntry::FunctionRoot,
+            Some(segment),
+            lexical_id,
+        ));
+        builder
     }
 
     fn finish(self) -> VizNodes {
@@ -167,6 +173,12 @@ impl Builder {
             .collect();
         segments.push(segment.clone());
         encode_segments(&self.function_name, &segments)
+    }
+
+    fn allocate_node_id(&mut self) -> u32 {
+        let id = self.next_node_id;
+        self.next_node_id += 1;
+        id
     }
 
     fn push_child(&mut self, node: VizNode, entry: FrameEntry, segment: PathSegment) {
@@ -318,6 +330,7 @@ impl Builder {
         let lexical_id = self.build_lexical_id(&segment);
         let parent = self.current_parent_lexical();
         let node = VizNode {
+            node_id: self.allocate_node_id(),
             id: lexical_id.clone(),
             parent,
             node_type: RuntimeNodeType::BranchGroup,
@@ -361,6 +374,7 @@ impl Builder {
         let lexical_id = self.build_lexical_id(&segment);
         let parent = self.current_parent_lexical();
         let node = VizNode {
+            node_id: self.allocate_node_id(),
             id: lexical_id.clone(),
             parent,
             node_type: RuntimeNodeType::BranchArm,
@@ -390,6 +404,7 @@ impl Builder {
         let lexical_id = self.build_lexical_id(&segment);
         let parent = self.current_parent_lexical();
         let node = VizNode {
+            node_id: self.allocate_node_id(),
             id: lexical_id.clone(),
             parent,
             node_type: RuntimeNodeType::Loop,
@@ -421,6 +436,7 @@ impl Builder {
         let lexical_id = self.build_lexical_id(&segment);
         let parent = self.current_parent_lexical();
         let node = VizNode {
+            node_id: self.allocate_node_id(),
             id: lexical_id.clone(),
             parent,
             node_type: RuntimeNodeType::OtherScope,
@@ -445,6 +461,7 @@ impl Builder {
         let lexical_id = self.build_lexical_id(&segment);
         let parent = self.current_parent_lexical();
         let node = VizNode {
+            node_id: self.allocate_node_id(),
             id: lexical_id.clone(),
             parent,
             node_type: RuntimeNodeType::HeaderContextEnter,

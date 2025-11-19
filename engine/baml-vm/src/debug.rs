@@ -371,6 +371,7 @@ fn viz_metadata(index: usize, nodes: &[VizNodeMeta]) -> String {
     match nodes.get(index) {
         Some(node) => {
             let mut metadata = vec![
+                format!("node_id={}", node.node_id),
                 format!("id={}", node.id),
                 format!("type={:?}", node.node_type),
             ];

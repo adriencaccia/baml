@@ -138,6 +138,8 @@ impl std::fmt::Display for Variant {
 /// Static metadata describing a control-flow visualization node.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct VizNodeMeta {
+    /// Stable, pre-order node id matching control_flow.rs ordering.
+    pub node_id: u32,
     /// Unique lexical node id within a function.
     pub id: String,
 

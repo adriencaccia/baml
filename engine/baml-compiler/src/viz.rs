@@ -4,6 +4,7 @@ use baml_vm::VizNodeMeta;
 /// Representation of a viz node during compilation.
 #[derive(Clone, Debug)]
 pub struct VizNode {
+    pub node_id: u32,
     pub id: String,
     pub parent: Option<String>,
     pub node_type: RuntimeNodeType,
@@ -40,6 +41,7 @@ impl VizNodes {
         self.nodes
             .into_iter()
             .map(|node| VizNodeMeta {
+                node_id: node.node_id,
                 id: node.id,
                 parent: node.parent,
                 node_type: node.node_type,

@@ -13,12 +13,15 @@ pub enum LexicalState {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct StateUpdate {
+    /// Stable node id (matches control_flow.rs pre-order allocation).
+    pub node_id: u32,
     pub lexical_id: String,
     pub new_state: LexicalState,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Frame {
+    pub node_id: u32,
     pub lexical_segment: PathSegment,
     pub lexical_id: String,
     pub node_type: RuntimeNodeType,
@@ -35,11 +38,11 @@ pub struct VizStateReducer {
 impl VizStateReducer {
     /// Apply a single viz exec event and return the resulting state updates.
     ///
-    /// `function_name` is used to synthesize lexical_ids from the stack of path segments,
-    /// matching `control_flow.rs::encode_segments`.
-    pub fn apply(&mut self, function_name: &str, viz_event: &VizExecEvent) -> Vec<StateUpdate> {
+    /// `function_name` is currently unused; lexical ids are supplied on the viz event but kept
+    /// for compatibility with callers that already pass it through.
+    pub fn apply(&mut self, _function_name: &str, viz_event: &VizExecEvent) -> Vec<StateUpdate> {
         match viz_event.event {
-            crate::VizExecDelta::Enter => self.handle_enter(function_name, viz_event),
+            crate::VizExecDelta::Enter => self.handle_enter(viz_event),
             crate::VizExecDelta::Exit => self.handle_exit(viz_event),
         }
     }
@@ -54,7 +57,7 @@ impl VizStateReducer {
         self.frames.iter().map(|f| f.lexical_id.clone()).collect()
     }
 
-    fn handle_enter(&mut self, function_name: &str, viz_event: &VizExecEvent) -> Vec<StateUpdate> {
+    fn handle_enter(&mut self, viz_event: &VizExecEvent) -> Vec<StateUpdate> {
         let mut updates = Vec::new();
 
         // Pop headers at or deeper than the incoming header level; this mirrors
@@ -67,6 +70,7 @@ impl VizStateReducer {
                     if top_level >= new_level {
                         let frame = self.frames.pop().expect("frame to exist");
                         updates.push(StateUpdate {
+                            node_id: frame.node_id,
                             lexical_id: frame.lexical_id,
                             new_state: LexicalState::Completed,
                         });
@@ -77,15 +81,10 @@ impl VizStateReducer {
             }
         }
 
-        let mut segments: Vec<PathSegment> = self
-            .frames
-            .iter()
-            .map(|f| f.lexical_segment.clone())
-            .collect();
-        segments.push(viz_event.path_segment.clone());
-        let lexical_id = encode_segments(function_name, &segments);
+        let lexical_id = viz_event.lexical_id.clone();
 
         let frame = Frame {
+            node_id: viz_event.node_id,
             lexical_segment: viz_event.path_segment.clone(),
             lexical_id: lexical_id.clone(),
             node_type: viz_event.node_type.clone(),
@@ -95,6 +94,7 @@ impl VizStateReducer {
         self.frames.push(frame);
 
         updates.push(StateUpdate {
+            node_id: viz_event.node_id,
             lexical_id,
             new_state: LexicalState::Running,
         });
@@ -126,6 +126,7 @@ impl VizStateReducer {
 
         for frame in popped {
             updates.push(StateUpdate {
+                node_id: frame.node_id,
                 lexical_id: frame.lexical_id,
                 new_state: LexicalState::Completed,
             });
